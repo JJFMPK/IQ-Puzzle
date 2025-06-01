@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IQ Puzzle Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .info {
+      margin-bottom: 10px;
+    }
+
+    .puzzle-box {
+      font-size: 24px;
+      margin: 20px 0;
+    }
+
+    .options {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .option {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .option:hover {
+      background-color: #0056b3;
+    }
+
+    .message, .timer, .final-score {
+      font-size: 18px;
+      margin: 10px 0;
+    }
+
+    .button-group {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .restart {
+      background: #28a745;
+      color: white;
+    }
+
+    .share {
+      background: #25D366;
+      color: white;
+    }
+
+    @media (max-width: 500px) {
+      .puzzle-box {
+        font-size: 20px;
+      }
+
+      .option {
+        padding: 10px 14px;
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 IQ Puzzle Game</h1>
+
+  <div class="info">Level: <span id="level">1</span></div>
+  <div class="info">IQ Score: <span id="iq">100</span></div>
+  <div class="info">⏱️ Time Left: <span id="timer">20</span>s</div>
+
+  <div class="puzzle-box" id="puzzle"></div>
+  <div class="options" id="options"></div>
+  <div class="message" id="message"></div>
+  <div class="final-score" id="final-score"></div>
+
+  <div class="button-group" id="endButtons" style="display:none;">
+    <button class="restart" onclick="restartGame()">🔄 Restart</button>
+    <button class="share" id="shareBtn">📤 Share on WhatsApp</button>
+  </div>
+
+  <script>
+    const puzzles = [
+      { question: "2, 4, 6, ?, 10", answer: 8, options: [7, 8, 9] },
+      { question: "5, 10, 15, ?, 25", answer: 20, options: [20, 18, 22] },
+      { question: "1, 4, 9, 16, ?", answer: 25, options: [24, 26, 25] },
+      { question: "30, 27, 24, ?, 18", answer: 21, options: [21, 20, 23] },
+      { question: "3, 6, 12, 24, ?", answer: 48, options: [36, 48, 60] },
+      { question: "2, 3, 5, 8, 12, ?", answer: 17, options: [16, 17, 18] },
+      { question: "100, 90, 81, ?, 65.61", answer: 72.9, options: [70.5, 72.9, 74.2] },
+      { question: "1, 2, 4, 8, ?", answer: 16, options: [12, 14, 16] },
+    ];
+
+    let currentLevel = 0;
+    let iqScore = 100;
+    let timer;
+    let timeLeft = 20;
+
+    function updateIQ(change) {
+      iqScore += change;
+      if (iqScore < 0) iqScore = 0;
+      document.getElementById("iq").textContent = iqScore;
+    }
+
+    function startTimer() {
+      timeLeft = 20;
+      document.getElementById("timer").textContent = timeLeft;
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").textContent = timeLeft;
+        if (timeLeft === 0) {
+          clearInterval(timer);
+          document.getElementById("message").textContent = "⏰ Time's up! -10 IQ points.";
+          updateIQ(-10);
+          setTimeout(() => {
+            currentLevel++;
+            if (currentLevel < puzzles.length) {
+              loadPuzzle();
+            } else {
+              showFinalScore();
+            }
+          }, 1500);
+        }
+      }, 1000);
+    }
+
+    function loadPuzzle() {
+      clearInterval(timer);
+      const puzzle = puzzles[currentLevel];
+      document.getElementById("puzzle").textContent = puzzle.question;
+      document.getElementById("level").textContent = currentLevel + 1;
+      document.getElementById("message").textContent = "";
+      document.getElementById("final-score").textContent = "";
+      document.getElementById("endButtons").style.display = "none";
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+      puzzle.options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.className = "option";
+        btn.textContent = opt;
+        btn.onclick = () => checkAnswer(opt);
+        optionsDiv.appendChild(btn);
+      });
+      startTimer();
+    }
+
+    function checkAnswer(selected) {
+      clearInterval(timer);
+      const correct = puzzles[currentLevel].answer;
+      if (selected === correct) {
+        document.getElementById("message").textContent = "✅ Correct! +10 IQ";
+        updateIQ(10);
+      } else {
+        document.getElementById("message").textContent = "❌ Wrong! -5 IQ";
+        updateIQ(-5);
+      }
+
+      currentLevel++;
+      setTimeout(() => {
+        if (currentLevel < puzzles.length) {
+          loadPuzzle();
+        } else {
+          showFinalScore();
+        }
+      }, 1500);
+    }
+
+    function getRank(score) {
+      if (score >= 130) return "🧠 Genius";
+      if (score >= 110) return "💡 Smart";
+      if (score >= 90) return "🙂 Average";
+      if (score >= 70) return "🤔 Below Average";
+      return "😬 Needs Practice";
+    }
+
+    function showFinalScore() {
+      clearInterval(timer);
+      document.getElementById("puzzle").textContent = "🎉 You've completed all puzzles!";
+      document.getElementById("options").innerHTML = "";
+      const rank = getRank(iqScore);
+      const scoreText = `Your Final IQ Score: ${iqScore}\nRank: ${rank}`;
+      document.getElementById("final-score").innerHTML = `<strong>${scoreText.replace(/\n/g, '<br>')}</strong>`;
+      document.getElementById("endButtons").style.display = "flex";
+
+      // WhatsApp share
+      const whatsappText = encodeURIComponent(`I scored ${iqScore} in the IQ Puzzle Game! (${rank}) Try it yourself!`);
+      document.getElementById("shareBtn").onclick = () => {
+        window.open(`https://wa.me/?text=${whatsappText}`, "_blank");
+      };
+    }
+
+    function restartGame() {
+      currentLevel = 0;
+      iqScore = 100;
+      loadPuzzle();
+    }
+
+    loadPuzzle();
+  </script>
+</body>
+</html>
